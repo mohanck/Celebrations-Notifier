@@ -31,7 +31,7 @@ def get_links
   @slack_data = {}
 
   Slack.configure do |config|
-    config.token = 'xoxp-2350191028-211235118960-215918672480-d2259e35c9751404774ee13984a5bbfb'
+    config.token = 'xoxp-2350191028-211235118960-218977273204-bc1276aa483787f67ce940eed86f5d7e'
     puts 'Invalid Token!' unless config.token
     fail 'Invalid Token!' unless config.token
   end
