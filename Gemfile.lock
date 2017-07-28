@@ -41,7 +41,7 @@ GEM
     multi_json (1.12.1)
     multipart-post (2.0.0)
     public_suffix (2.0.5)
-    retriable (3.0.2)
+    retriable (3.1.0)
     signet (0.7.3)
       addressable (~> 2.3)
       faraday (~> 0.9)
