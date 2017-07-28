@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
-ruby 2.3.3
+ruby '2.3.3'
 gem 'icalendar'
 gem 'google-api-client', '~> 0.7.1'
 gem 'slack-ruby-client'
