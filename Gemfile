@@ -1,7 +1,8 @@
 source 'https://rubygems.org'
 
-gem 'icalendar'
 gem 'google-api-client', '~> 0.7.1'
+gem 'icalendar'
+gem 'rubocop'
 gem 'slack-ruby-client'
 
 Gem::Specification.new do |gem|
