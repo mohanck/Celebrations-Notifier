@@ -20,10 +20,10 @@ SCOPE = Google::Apis::AdminDirectoryV1::AUTH_ADMIN_DIRECTORY_USER_READONLY
 
 def get_links
   # Anniversary Feed Link (iCal) from Bamboo
-  @anniversary_link = 'https://appfolio.bamboohr.com/feeds/feed.php?id=e0d4eb5ea163290283d650a2b4581ff2'
+  @anniversary_link = ENV['ANNIVERSARY_LINK']
 
   # Birthday Feed Link (iCal) from Bamboo
-  @birthday_link    = 'https://appfolio.bamboohr.com/feeds/feed.php?id=df99fa6bb8361350db1e6581838ce069'
+  @birthday_link    = ENV['BIRTHDAY_LINK']
 
   # File Names
   @anniversary_file = 'anniversaries.ics'
@@ -36,7 +36,7 @@ def get_links
   @slack_data = {}
 
   Slack.configure do |config|
-    config.token = 'xoxp-2350191028-211235118960-220227158071-b7de9be30cf73b5a483f2e1f060be95e'
+    config.token = ENV['SLACK_TOKEN']
     puts 'Invalid Token!' unless config.token
     raise 'Invalid Token!' unless config.token
   end
@@ -56,12 +56,13 @@ def construct_array(location, hash_name)
   cal = Icalendar::Calendar.parse(cal_file).first
 
   cal.events.each do |e|
-    next unless e.dtstart == Date.today + 6 # Test
+    next unless e.dtstart == Date.today + 2 # + 6 # Test
     event = {}
     event['name'] = (location == @anniversary_file ? e.summary[0..e.summary.index('(') - 1].strip : e.summary[0..e.summary.index('-') - 1].strip)
     event['duration'] = e.summary[e.summary.index('(') + 1...e.summary.length - 1].strip.gsub!('yr', 'year') if location == @anniversary_file
     hash_name.append(event)
   end
+  pp hash_name
 end
 
 def fill_emails(array)
@@ -92,6 +93,7 @@ def authorize
       user_id: user_id, code: code, base_url: OOB_URI
     )
   end
+  credentials.fetch_access_token!({}) if credentials.expired?
   credentials
 end
 
@@ -131,36 +133,37 @@ def fill_slack_data
   members_data = response['members']
 
   members_data.each do |d|
-    @slack_data[d['profile']['email']] = d['name'] unless d['profile']['email'].blank? || d['name'].blank? || d['is_bot'] || d['disabled']
+    @slack_data[d['profile']['email']] = d['name'] unless (d['profile']['email'].blank? || d['name'].blank? || d['is_bot'] || d['disabled'])
   end
+
 end
 
 def send_notification
   names = []
   @anniversaries.each do |emp|
     if @slack_data[emp['email']].blank?
-      p "#{emp['name']} who is celebrating #{emp['duration']} anniversary is not a slack user!"
+      names.append("Happy anniversary #{emp['name']}!")
     else
-      names.append("#{emp['name']} (@#{@slack_data[emp['email']]}) is celebrating #{emp['duration']} anniversary!") unless @slack_data[emp['email']].blank?
+      names.append("Happy anniversary #{emp['name']} (@#{@slack_data[emp['email']]})!") unless @slack_data[emp['email']].blank?
     end
   end
 
   @birthdays.each do |emp|
     if @slack_data[emp['email']].blank?
-      p "#{emp['name']} who is celebrating birthday is not a slack user!"
+      names.append("Happy birthday #{emp['name']}!")
     else
-      names.append("#{emp['name']} (@#{@slack_data[emp['email']]}) is celebrating birthday!") unless @slack_data[emp['email']].blank?
+      names.append("Happy birthday #{emp['name']} (@#{@slack_data[emp['email']]})!") unless @slack_data[emp['email']].blank?
     end
   end
 
   names.each do |m|
-    p m
-    @client.chat_postMessage(channel: '#bc', text: m.to_s, as_user: false, username: 'Celebrations Notifier')
+    @client.chat_postMessage(channel: '#celebrationsnotifier', text: m.to_s, as_user: false, username: 'Celebrations Notifier')
   end
-
+    @client.chat_postMessage(channel: '#celebrationsnotifier', link_names: 1, text: '@mohanc Hello', as_user: false, username: 'Celebrations Notifier')
   p 'No Notifications today!' if names.empty?
 end
 
+pp Date.today - 1
 get_links
 download_files
 construct_array(@anniversary_file, @anniversaries)
